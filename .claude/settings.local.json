@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn exec:java:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

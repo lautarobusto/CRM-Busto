@@ -1,0 +1,13 @@
+models\Rubro.class
+api\NewMain.class
+api\DataBaseUpdate.class
+dao\DatabaseConnection.class
+dao\MarcaDao.class
+api\JsonMapper.class
+dao\IArticuloDao.class
+dao\IMarcaDao.class
+api\AuthenticationService.class
+models\Marca.class
+api\JsonDownloader.class
+dao\ArticuloDao.class
+models\Articulo.class
