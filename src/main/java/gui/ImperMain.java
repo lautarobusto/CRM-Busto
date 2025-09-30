@@ -1,6 +1,9 @@
 package gui;
 
 
+import api.DataBaseUpdate;
+import dao.ArticuloDao;
+import dao.MarcaDao;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -9,6 +12,9 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.JProgressBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.SwingWorker;
@@ -18,6 +24,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import models.Articulo;
 
 /**
  *
@@ -25,13 +32,22 @@ import javax.swing.table.TableRowSorter;
  */
 public class ImperMain extends javax.swing.JFrame {
 
+    private MarcaDao marcaDao;
+    private ArticuloDao articuloDao;
+
     public ImperMain() {
 
         initComponents();
+        marcaDao = new MarcaDao();
+        articuloDao = new ArticuloDao();
         myInitComponents();
-        ImageIcon img = new ImageIcon("gear2.png");
 
-        setIconImage(img.getImage());
+        try {
+           // ImageIcon img = new ImageIcon(getClass().getResource("gear2.png"));
+           // setIconImage(img.getImage());
+        } catch (Exception e) {
+            // Icon not found, continue without it
+        }
 
     }
 
@@ -68,7 +84,12 @@ public class ImperMain extends javax.swing.JFrame {
         if (rowa >= 0) {
             int row = tableMarca.convertRowIndexToModel(rowa);
             String marca = tableMarca.getModel().getValueAt(row, 0).toString();
-            //tableProducto.setModel(buildTableModel(conector.getProdM(marca)));
+            try {
+                tableProducto.setModel(buildTableModel(articuloDao.getProductosByMarca(marca)));
+            } catch (SQLException ex) {
+                Logger.getLogger(ImperMain.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(this, "Error loading products: " + ex.getMessage());
+            }
         }
     }
 
@@ -77,16 +98,18 @@ public class ImperMain extends javax.swing.JFrame {
 
         if (rowa >= 0) {
             int row = tableProducto.convertRowIndexToModel(rowa);
-            String producto = tableProducto.getModel().getValueAt(row, 0).toString();
-            //ResultSet rst = conector.getProd(producto);
-            //jTextFieldCodigoImp.setText(rst.getString("CodImperdiel"));
-            //jTextFieldCodigoOri.setText(rst.getString("CodOrigen"));
-            //jTextFieldMarcap.setText(rst.getString("Marca"));
-            //jTextFieldNombre.setText(rst.getString("Nombre"));
-           // jTextFieldRubro.setText(rst.getString("Rubro"));
-            //jFormattedTextFieldPrecio.setValue((Object) rst.getDouble("Precio"));
-            //jFormattedTextFieldPrecio1.setValue((Object) rst.getDouble("PrecioIva"));
-            //jFormattedTextFieldPrecio2.setValue((Object) rst.getDouble("PrecioCosto"));
+            String nombre = tableProducto.getModel().getValueAt(row, 0).toString();
+            Articulo articulo = articuloDao.getProductoByNombre(nombre);
+            if (articulo != null) {
+                jTextFieldCodigoImp.setText(articulo.getCodigo());
+                jTextFieldCodigoOri.setText(articulo.getCodigo());
+                jTextFieldMarcap.setText(articulo.getMarca().getNombre());
+                jTextFieldNombre.setText(articulo.getNombre());
+                jTextFieldRubro.setText(articulo.getRubro().getNombre());
+                jFormattedTextFieldPrecio.setValue((Object) articulo.getPrecioNeto());
+                jFormattedTextFieldPrecio1.setValue((Object) articulo.getPrecioIva());
+                jFormattedTextFieldPrecio2.setValue((Object) articulo.getPrecioCosto());
+            }
         }
 
     }
@@ -96,7 +119,15 @@ public class ImperMain extends javax.swing.JFrame {
         tableProducto.setAutoCreateRowSorter(false);
         tableMarca.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         tableProducto.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        //tableMarca.setModel(buildTableModel(conector.getMarca()));
+
+        // Load marcas on startup
+        try {
+            tableMarca.setModel(buildTableModel(marcaDao.getAllAsResultSet()));
+        } catch (SQLException ex) {
+            Logger.getLogger(ImperMain.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(this, "Error loading brands: " + ex.getMessage());
+        }
+
         tableMarca.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent event) {
@@ -120,16 +151,74 @@ public class ImperMain extends javax.swing.JFrame {
     }
 
     private void update() {
+        jButton2.setEnabled(false);
+        jButton2.setText("Actualizando...");
 
-        new SwingWorker<Void, Void>() {
+        // Create progress dialog
+        JDialog progressDialog = new JDialog(this, "Actualizando Base de Datos", true);
+        JProgressBar progressBar = new JProgressBar();
+        progressBar.setIndeterminate(true);
+        progressBar.setString("Verificando archivos...");
+        progressBar.setStringPainted(true);
+        progressDialog.add(progressBar);
+        progressDialog.setSize(400, 100);
+        progressDialog.setLocationRelativeTo(this);
+        progressDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+
+        new SwingWorker<Void, String>() {
             @Override
             protected Void doInBackground() throws Exception {
+                try {
+                    publish("Verificando archivos...");
+                    DataBaseUpdate dataBaseUpdate = new DataBaseUpdate();
+                    dataBaseUpdate.updateArticulos(new api.JsonDownloader.DownloadListener() {
+                        @Override
+                        public void onDownloadStarted() {
+                            publish("Descargando datos desde la API...");
+                        }
 
-                //TODO ADD UPODATE LOGC
+                        @Override
+                        public void onDownloadComplete() {
+                            publish("Descarga completa, actualizando base de datos...");
+                        }
+                    });
+                    publish("Actualización completa!");
+                } catch (Exception ex) {
+                    Logger.getLogger(ImperMain.class.getName()).log(Level.SEVERE, null, ex);
+                    throw ex;
+                }
                 return null;
+            }
 
+            @Override
+            protected void process(java.util.List<String> chunks) {
+                if (!chunks.isEmpty()) {
+                    progressBar.setString(chunks.get(chunks.size() - 1));
+                }
+            }
+
+            @Override
+            protected void done() {
+                progressDialog.dispose();
+                try {
+                    get(); // Check for exceptions
+                    JOptionPane.showMessageDialog(ImperMain.this, "¡Base de datos actualizada correctamente!");
+                    // Reload marcas table
+                    tableMarca.setModel(buildTableModel(marcaDao.getAllAsResultSet()));
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(ImperMain.this,
+                        "Error al actualizar la base de datos: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    jButton2.setEnabled(true);
+                    jButton2.setText("Actualizar DB");
+                }
             }
         }.execute();
+
+        // Show progress dialog (will block until worker is done)
+        progressDialog.setVisible(true);
 
     }
 
@@ -508,7 +597,12 @@ public class ImperMain extends javax.swing.JFrame {
 
         jPanel1.getAccessibleContext().setAccessibleName("Marca");
 
-        jTabbedPane1.addTab("Precios Imperdiel", new javax.swing.ImageIcon(getClass().getResource("/imper/gui/gear.png")), PrecioTab); // NOI18N
+        java.net.URL iconURL = getClass().getResource("gear.png");
+        if (iconURL != null) {
+            jTabbedPane1.addTab("Precios Imperdiel", new javax.swing.ImageIcon(iconURL), PrecioTab); // NOI18N
+        } else {
+            jTabbedPane1.addTab("Precios Imperdiel", PrecioTab); // NOI18N - Without icon
+        }
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

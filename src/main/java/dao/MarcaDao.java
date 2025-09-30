@@ -6,16 +6,16 @@ import java.util.List;
 import models.Marca;
 
 public class MarcaDao implements IMarcaDao {
-    
+
     @Override
     public List<Marca> findAll() {
         List<Marca> marcas = new ArrayList<>();
         String sql = "SELECT * FROM marcas ORDER BY nombre";
-        
+
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-            
+
             while (rs.next()) {
                 Marca marca = new Marca();
                 marca.setId(rs.getInt("id"));
@@ -26,5 +26,12 @@ public class MarcaDao implements IMarcaDao {
             e.printStackTrace();
         }
         return marcas;
+    }
+
+    public ResultSet getAllAsResultSet() throws SQLException {
+        String sql = "SELECT nombre as Marca FROM marcas ORDER BY nombre";
+        Connection conn = DatabaseConnection.getInstance().getConnection();
+        Statement stmt = conn.createStatement();
+        return stmt.executeQuery(sql);
     }
 }

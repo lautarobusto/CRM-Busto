@@ -14,6 +14,15 @@ import java.util.List;
 public class DataBaseUpdate {
 
     public void updateArticulos() throws Exception {
+        updateArticulos(null);
+    }
+
+    public void updateArticulos(JsonDownloader.DownloadListener listener) throws Exception {
+        // Download JSON file if needed (doesn't exist or older than 5 days)
+        JsonDownloader downloader = new JsonDownloader();
+        downloader.downloadFile(listener);
+
+        // Parse and insert into database
         JsonMapper mapper = new JsonMapper();
         List<Articulo> articulos = mapper.readArticulos();
         insertArticulos(articulos);

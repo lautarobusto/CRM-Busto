@@ -14,6 +14,7 @@ gui\ImperMain$6.class
 gui\ImperMain$10.class
 gui\ImperMain.class
 models\Rubro.class
+gui\ImperMain$3$1.class
 gui\ImperMain$5.class
 gui\ImperMain$13.class
 api\DataBaseUpdate.class
@@ -24,5 +25,6 @@ dao\IMarcaDao.class
 gui\ImperMain$11.class
 api\JsonDownloader.class
 gui\ImperMain$7.class
+api\JsonDownloader$DownloadListener.class
 models\Articulo.class
 gui\ImperMain$14.class
