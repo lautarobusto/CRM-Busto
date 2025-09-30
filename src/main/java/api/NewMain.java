@@ -32,7 +32,7 @@ public class NewMain {
             }
 
             DataBaseUpdate dataBaseUpdate = new DataBaseUpdate();
-            //dataBaseUpdate.updateArticulos();
+            dataBaseUpdate.updateArticulos();
 
             // Query first article after processing
             System.out.println("\nQuerying first article from database:");
