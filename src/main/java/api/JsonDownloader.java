@@ -39,8 +39,9 @@ public class JsonDownloader {
     }
 
     public void downloadFile(DownloadListener listener) throws IOException, InterruptedException {
-        Path resourcesPath = Paths.get("src/main/resources");
-        Path filePath = resourcesPath.resolve("Articulos.json");
+        Path appDir = Paths.get(System.getProperty("user.home"), ".consultorimperdiel");
+        Files.createDirectories(appDir);
+        Path filePath = appDir.resolve("Articulos.json");
 
         if (shouldDownload(filePath)) {
             System.out.println("Downloading latest data from API...");
@@ -96,8 +97,9 @@ public class JsonDownloader {
     }
 
     private void saveToFile(String jsonContent, String filename) throws IOException {
-        Path resourcesPath = Paths.get("src/main/resources");
-        Path filePath = resourcesPath.resolve(filename);
+        Path appDir = Paths.get(System.getProperty("user.home"), ".consultorimperdiel");
+        Files.createDirectories(appDir);
+        Path filePath = appDir.resolve(filename);
         Files.write(filePath, jsonContent.getBytes());
     }
 }

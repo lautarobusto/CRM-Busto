@@ -22,7 +22,8 @@ public class JsonMapper {
     }
 
     public List<Articulo> readArticulos() throws IOException {
-        Path filePath = Paths.get("src/main/resources/Articulos.json");
+        Path appDir = Paths.get(System.getProperty("user.home"), ".consultorimperdiel");
+        Path filePath = appDir.resolve("Articulos.json");
         String jsonContent = Files.readString(filePath);
         JsonNode rootNode = objectMapper.readTree(jsonContent);
 

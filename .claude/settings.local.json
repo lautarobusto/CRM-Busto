@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mvn exec:java:*)"
+      "Bash(mvn exec:java:*)",
+      "Bash(cmd /c:*)",
+      "Bash(mvn clean:*)",
+      "Bash(.mvnw.cmd clean package)",
+      "Bash(pwsh:*)"
     ],
     "deny": [],
     "ask": []
